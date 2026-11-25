@@ -68,6 +68,8 @@
       let scanner = null;
       let busy = false;
       let cameraStarting = false;
+      let currentScanId = '';
+      let scanAcknowledged = false;
 
       $('context').textContent = `${session.module || 'Module not selected'} · ${session.date || 'Date not selected'} · ${session.group ? 'Group ' + session.group : 'Group not selected'}`;
 
@@ -146,6 +148,8 @@
         }
 
         busy = true;
+        currentScanId = studentId;
+        scanAcknowledged = false;
         $('check').disabled = true;
         $('restart').disabled = true;
         $('connectionState').textContent = 'WAITING';
@@ -159,6 +163,18 @@
           date: session.date,
           group: session.group
         }, '*');
+
+        // Bring the attendance page forward so its update/registration form
+        // can be seen. The scanner stays open and waits for the resume signal.
+        try { window.opener.focus(); } catch (focusError) {}
+        try { window.blur(); } catch (blurError) {}
+
+        // Diagnose a missed hand-off instead of silently waiting forever.
+        setTimeout(() => {
+          if (busy && !scanAcknowledged && currentScanId === studentId) {
+            setStatus('ID was scanned, but LEADERSHIP MODULE has not acknowledged it. Check that the updated JavaScript.html was saved and a new Web App version was deployed.', 'error');
+          }
+        }, 2500);
       }
 
       window.addEventListener('message', async event => {
@@ -166,7 +182,18 @@
         const message = event.data;
         if (!message || typeof message !== 'object') return;
 
+        if (message.type === 'LEADERSHIP_MODULE_QR_RECEIVED') {
+          if (String(message.studentId || '') === currentScanId) {
+            scanAcknowledged = true;
+            setStatus('Student ID ' + currentScanId + ' received by LEADERSHIP MODULE. Complete the attendance or registration in the attendance page.');
+          }
+          return;
+        }
+
         if (message.type === 'LEADERSHIP_MODULE_QR_RESUME') {
+          try { window.focus(); } catch (focusError) {}
+          currentScanId = '';
+          scanAcknowledged = false;
           busy = false;
           $('check').disabled = false;
           $('restart').disabled = false;
