@@ -30,6 +30,13 @@
     .actions button { flex:1; }
     .note { margin:16px 0 0; color:#7b8190; font-size:12px; }
     .status-card { border-radius:12px; padding:10px 12px; background:#f4f2fc; }
+    /* The scanner camera is visually dismissed while the attendance form is open. */
+    body.paused #reader,
+    body.paused label,
+    body.paused #studentId,
+    body.paused #check,
+    body.paused #restart { display:none !important; }
+    body.paused .note { margin-top:12px; }
   </style>
 </head>
 <body>
@@ -52,7 +59,7 @@
       <button id="restart" class="secondary" type="button">Restart camera</button>
       <button id="back" class="secondary" type="button">Close scanner</button>
     </div>
-    <p class="note">Keep this scanner window open during attendance. After you save or cancel a student's update in LEADERSHIP MODULE, scanning will resume automatically. Close this window manually when the session ends.</p>
+    <p class="note">After each scan, the camera pauses and this window moves behind LEADERSHIP MODULE so the attendance or registration form is visible. After you save or cancel, the scanner comes back automatically. Keep this window open; close it manually when the session ends.</p>
   </main>
 
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -153,8 +160,9 @@
         $('check').disabled = true;
         $('restart').disabled = true;
         $('connectionState').textContent = 'WAITING';
-        setStatus('Student ID ' + studentId + ' captured.\nComplete the attendance or registration in LEADERSHIP MODULE. This scanner will restart automatically afterwards.', 'waiting');
+        setStatus('Student ID ' + studentId + ' captured.\nComplete the attendance or registration in LEADERSHIP MODULE. The scanner is paused and will reopen after the update.', 'waiting');
         await stopCamera();
+        document.body.classList.add('paused');
 
         window.opener.postMessage({
           type: 'LEADERSHIP_MODULE_QR_RESULT',
@@ -164,10 +172,15 @@
           group: session.group
         }, '*');
 
-        // Bring the attendance page forward so its update/registration form
-        // can be seen. The scanner stays open and waits for the resume signal.
+        // Apps Script HTML Service is framed. Focusing only window.opener can
+        // focus the iframe without switching away from this scanner popup.
+        // Focus the opener's top-level browser window so the student form shows.
+        try { window.opener.top.focus(); } catch (focusError) {}
         try { window.opener.focus(); } catch (focusError) {}
         try { window.blur(); } catch (blurError) {}
+        setTimeout(() => {
+          try { window.opener.top.focus(); } catch (focusError) {}
+        }, 120);
 
         // Diagnose a missed hand-off instead of silently waiting forever.
         setTimeout(() => {
@@ -191,6 +204,7 @@
         }
 
         if (message.type === 'LEADERSHIP_MODULE_QR_RESUME') {
+          document.body.classList.remove('paused');
           try { window.focus(); } catch (focusError) {}
           currentScanId = '';
           scanAcknowledged = false;
