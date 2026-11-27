@@ -43,7 +43,7 @@
     <button id="restart" class="secondary" type="button">Restart camera</button>
     <button id="back" class="secondary" type="button">Close scanner</button>
   </div>
-  <p class="note">The scanner sends the captured ID to LEADERSHIP MODULE. The scanner closes after sending a Student ID so the form is visible. Save or cancel the form to reopen scanning. <span class="pill" id="state">CONNECTING</span></p>
+  <p class="note">The scanner sends the captured ID to LEADERSHIP MODULE. The camera pauses while the attendance or registration form is open and resumes after the form is completed or cancelled. <span class="pill" id="state">CONNECTING</span></p>
 </main>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
@@ -54,6 +54,7 @@
     module: params.get('module') || '',
     date: params.get('date') || '',
     group: params.get('group') || '',
+    cohortId: params.get('cohortId') || '',
     token: params.get('token') || ''
   };
   const $ = id => document.getElementById(id);
@@ -62,7 +63,7 @@
   let starting = false;
   let closed = false;
 
-  $('context').textContent = `${session.module || 'Module not selected'} · ${session.date || 'Date not selected'} · ${session.group ? 'Group ' + session.group : 'All groups'}`;
+  $('context').textContent = `${session.module || 'Module not selected'} · ${session.date || 'Date not selected'} · ${session.cohortId ? 'Cohort ' + session.cohortId + ' · ' : ''}${session.group ? 'Group ' + session.group : 'All groups'}`;
 
   function setStatus(message, isError = false) {
     $('status').textContent = message;
@@ -123,7 +124,8 @@
         studentId,
         module: session.module,
         date: session.date,
-        group: session.group
+        group: session.group,
+        cohortId: session.cohortId
       });
       setStatus(`Student ID ${studentId} sent. Complete the attendance or registration form in LEADERSHIP MODULE. The scanner will resume automatically afterwards.`);
       setState('WAITING FOR FORM');
@@ -175,14 +177,8 @@
     if (!data || typeof data !== 'object' || data.token !== session.token) return;
 
     if (data.type === 'LEADERSHIP_MODULE_QR_RECEIVED') {
-      // The parent has received the ID. Close this popup so its attendance or
-      // registration form is no longer hidden behind the scanner window.
-      closed = true;
-      setStatus(`Student ID ${data.studentId || ''} received. Returning to LEADERSHIP MODULE…`);
-      setState('HANDED OFF');
-      stopCamera().finally(() => setTimeout(() => {
-        try { window.close(); } catch (error) {}
-      }, 100));
+      setStatus(`LEADERSHIP MODULE received Student ID ${data.studentId || ''}. Finish the form to resume scanning.`);
+      setState('WAITING FOR FORM');
       return;
     }
 
