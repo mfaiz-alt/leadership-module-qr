@@ -3,253 +3,206 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#24104f">
+  <meta name="theme-color" content="#6851dc">
   <title>LEADERSHIP MODULE · QR Scanner</title>
   <style>
-    :root { color-scheme: light; --ink:#20243a; --muted:#687086; --purple:#6851dc; --line:#e5e6ef; }
-    * { box-sizing:border-box; }
-    body { margin:0; min-height:100vh; padding:16px; background:#f3f4fa; color:var(--ink); font:16px/1.45 Arial,sans-serif; }
-    main { width:min(100%,520px); margin:0 auto; background:#fff; border:1px solid var(--line); border-radius:20px; padding:20px; box-shadow:0 12px 36px #1d214015; }
-    .top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-    .eyebrow { color:#7968c9; font-size:11px; font-weight:800; letter-spacing:1.8px; }
-    .live { font-size:11px; font-weight:800; color:#176b43; background:#e8f7ef; padding:5px 9px; border-radius:999px; }
-    h1 { margin:8px 0 4px; font-size:25px; line-height:1.2; }
-    .context { color:var(--muted); margin:0 0 16px; overflow-wrap:anywhere; font-size:14px; }
-    #reader { width:100%; min-height:260px; border:1px dashed #c9c7db; border-radius:15px; overflow:hidden; background:#f7f6fc; }
-    #reader video { object-fit:cover; }
-    .status { min-height:44px; margin:12px 0; color:#5d4c9e; font-weight:700; white-space:pre-line; overflow-wrap:anywhere; font-size:14px; }
-    .error { color:#a12d45; }
-    .waiting { color:#875400; }
-    label { display:block; margin:15px 0 6px; color:#555d70; font-weight:700; font-size:13px; }
-    input { width:100%; border:1px solid var(--line); border-radius:11px; padding:13px; font-size:17px; }
-    button { border:0; border-radius:11px; padding:12px 15px; font-size:14px; font-weight:700; cursor:pointer; }
-    button:disabled { opacity:.45; cursor:not-allowed; }
-    .primary { width:100%; margin-top:9px; color:#fff; background:var(--purple); }
-    .secondary { color:#4c5264; background:#eef0f5; }
-    .actions { display:flex; gap:9px; margin-top:12px; }
-    .actions button { flex:1; }
-    .note { margin:16px 0 0; color:#7b8190; font-size:12px; }
-    .status-card { border-radius:12px; padding:10px 12px; background:#f4f2fc; }
-    /* The scanner camera is visually dismissed while the attendance form is open. */
-    body.paused #reader,
-    body.paused label,
-    body.paused #studentId,
-    body.paused #check,
-    body.paused #restart { display:none !important; }
-    body.paused .note { margin-top:12px; }
+    :root{color-scheme:light;--ink:#20243a;--muted:#687086;--purple:#6851dc;--line:#e5e6ef;}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;padding:18px 14px;background:#f3f4fa;color:var(--ink);font:15px/1.5 Arial,sans-serif}
+    main{width:min(100%,470px);margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 12px 36px #1d214015}
+    .eyebrow{color:#7968c9;font-size:11px;font-weight:800;letter-spacing:1.8px} h1{margin:7px 0;font-size:24px;line-height:1.2}
+    .context{color:var(--muted);margin:0 0 14px;overflow-wrap:anywhere;font-size:13px}
+    #reader{width:100%;min-height:260px;border:1px dashed #c9c7db;border-radius:14px;overflow:hidden;background:#f7f6fc}
+    #reader video{object-fit:cover} .status{min-height:48px;margin:12px 0;color:#5d4c9e;font-weight:700;overflow-wrap:anywhere}
+    .status.error{color:#a12d45} .status.success{color:#26734d}
+    label{display:block;margin:14px 0 6px;color:#555d70;font-weight:700;font-size:13px}
+    input{width:100%;border:1px solid var(--line);border-radius:11px;padding:13px;font-size:16px}
+    button{border:0;border-radius:11px;padding:13px 15px;font-size:14px;font-weight:700;cursor:pointer}
+    button:disabled{opacity:.5;cursor:not-allowed}.primary{width:100%;margin-top:9px;color:#fff;background:var(--purple)}
+    .secondary{color:#4c5264;background:#eef0f5}.actions{display:flex;gap:9px;margin-top:12px}.actions button{flex:1}
+    .note{margin:16px 0 0;color:#7b8190;font-size:12px}.waiting{display:none;border-radius:13px;background:#f3f0ff;padding:16px;color:#4b3d94;font-weight:700}
+    .waiting small{display:block;margin-top:6px;color:#6f6a87;font-weight:400}.hidden{display:none!important}
   </style>
 </head>
 <body>
-  <main>
-    <div class="top">
-      <span class="eyebrow">LEADERSHIP MODULE · ATTENDANCE</span>
-      <span class="live" id="connectionState">CONNECTING</span>
-    </div>
-    <h1>Scan Student QR Code</h1>
-    <p class="context" id="context">Loading selected session…</p>
-
+<main>
+  <span class="eyebrow">ATTENDANCE QUICK SCAN</span>
+  <h1>Scan Student QR Code</h1>
+  <p class="context" id="context">Loading selected session…</p>
+  <section id="scannerPanel">
     <div id="reader"></div>
-    <p id="status" class="status status-card" role="status" aria-live="polite">Preparing camera…</p>
-
-    <label for="studentId">Manual Student ID entry</label>
+    <p id="status" class="status" role="status">Preparing camera…</p>
+    <label for="studentId">Or enter Student ID manually</label>
     <input id="studentId" inputmode="numeric" autocomplete="off" placeholder="Enter Student ID">
     <button id="check" class="primary" type="button">Check Student ID</button>
-
     <div class="actions">
       <button id="restart" class="secondary" type="button">Restart camera</button>
       <button id="back" class="secondary" type="button">Close scanner</button>
     </div>
-    <p class="note">After each scan, the camera pauses and this window moves behind LEADERSHIP MODULE so the attendance or registration form is visible. After you save or cancel, the scanner comes back automatically. Keep this window open; close it manually when the session ends.</p>
-  </main>
+  </section>
+  <section id="waiting" class="waiting" aria-live="polite">
+    Student ID captured. Complete the attendance update or registration in LEADERSHIP MODULE.
+    <small>The camera is paused. It will resume automatically when the attendance form is saved or closed.</small>
+  </section>
+  <p class="note">Keep this scanner window open during the session. Close it manually when scanning is finished.</p>
+</main>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const params = new URLSearchParams(location.search);
+  const session = {
+    module: params.get('module') || '',
+    date: params.get('date') || '',
+    group: params.get('group') || '',
+    token: params.get('token') || ''
+  };
+  const $ = id => document.getElementById(id);
+  let scanner = null;
+  let busy = false;
+  let starting = false;
+  $('context').textContent = `${session.module || 'Module missing'} · ${session.date || 'Date missing'} · ${session.group ? 'Group ' + session.group : 'Group missing'}`;
 
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script>
-    (() => {
-      const params = new URLSearchParams(location.search);
-      const session = {
-        module: params.get('module') || '',
-        date: params.get('date') || '',
-        group: params.get('group') || ''
-      };
-      const $ = id => document.getElementById(id);
-      let scanner = null;
-      let busy = false;
-      let cameraStarting = false;
-      let currentScanId = '';
-      let scanAcknowledged = false;
-
-      $('context').textContent = `${session.module || 'Module not selected'} · ${session.date || 'Date not selected'} · ${session.group ? 'Group ' + session.group : 'Group not selected'}`;
-
-      function setStatus(message, type) {
-        $('status').textContent = message;
-        $('status').classList.toggle('error', type === 'error');
-        $('status').classList.toggle('waiting', type === 'waiting');
+  function setStatus(message, kind='') {
+    $('status').textContent = message;
+    $('status').className = 'status' + (kind ? ' ' + kind : '');
+  }
+  function extractStudentId(raw) {
+    const value = String(raw || '').trim();
+    const labelled = value.match(/(?:STUDENT[_\s-]*ID|STUDENTID|ID)\s*[:=#/ ]\s*([0-9]{6,15})/i);
+    if (labelled) return labelled[1];
+    const query = value.match(/[?&](?:student[_-]?id|studentid|id)=([0-9]{6,15})(?:&|$)/i);
+    if (query) return query[1];
+    const plain = value.match(/^([0-9]{6,15})$/);
+    if (plain) return plain[1];
+    const numeric = value.match(/\b([0-9]{6,15})\b/);
+    if (numeric) return numeric[1];
+    throw new Error('QR code does not contain a valid Student ID (6–15 digits).');
+  }
+  async function stopCamera() {
+    const current = scanner;
+    if (!current) return;
+    scanner = null;
+    try { if (current.isScanning) await current.stop(); } catch (error) {}
+    try { current.clear(); } catch (error) {}
+  }
+  function sendClosed() {
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({type:'LEADERSHIP_MODULE_QR_CLOSED',token:session.token}, '*');
       }
-
-      function extractStudentId(raw) {
-        const value = String(raw || '').trim();
-        const labelled = value.match(/(?:STUDENT[_\s-]*ID|STUDENTID|ID)\s*[:=#/ ]\s*([0-9]{6,15})/i);
-        if (labelled) return labelled[1];
-        const query = value.match(/[?&](?:student[_-]?id|studentid|id)=([0-9]{6,15})(?:&|$)/i);
-        if (query) return query[1];
-        const plain = value.match(/^([0-9]{6,15})$/);
-        if (plain) return plain[1];
-        const numeric = value.match(/\b([0-9]{6,15})\b/);
-        if (numeric) return numeric[1];
-        throw new Error('QR code does not contain a valid Student ID (6–15 digits).');
-      }
-
-      async function stopCamera() {
-        if (!scanner) return;
-        const current = scanner;
-        scanner = null;
-        try { if (current.isScanning) await current.stop(); } catch (error) {}
-        try { current.clear(); } catch (error) {}
-      }
-
-      async function startCamera() {
-        if (busy || cameraStarting) return;
-        cameraStarting = true;
-        await stopCamera();
-        if (typeof Html5Qrcode === 'undefined') {
-          setStatus('QR scanner library did not load. Check your internet connection or use manual Student ID entry.', 'error');
-          cameraStarting = false;
-          return;
-        }
-        setStatus('Requesting camera access…');
-        try {
-          scanner = new Html5Qrcode('reader');
-          const cameras = await Html5Qrcode.getCameras();
-          if (!cameras || !cameras.length) throw new Error('No camera was detected on this device.');
-          const preferred = cameras.find(camera => /back|rear|environment|world/i.test(camera.label)) || cameras[cameras.length - 1];
-          await scanner.start(
-            preferred.id,
-            { fps: 10, qrbox: { width: 245, height: 245 }, aspectRatio: 1 },
-            decodedText => sendStudentId(decodedText),
-            () => {}
-          );
-          $('connectionState').textContent = 'READY';
-          setStatus('Camera ready. Point it at the QR code on the student card.');
-        } catch (error) {
-          await stopCamera();
-          $('connectionState').textContent = 'CAMERA ERROR';
-          setStatus('Unable to start camera: ' + (error && error.message ? error.message : String(error)) + '\nCheck Chrome camera permission, then use manual Student ID entry if needed.', 'error');
-        } finally {
-          cameraStarting = false;
-        }
-      }
-
-      async function sendStudentId(raw) {
-        if (busy) return;
-        let studentId;
-        try { studentId = extractStudentId(raw); }
-        catch (error) { setStatus(error.message, 'error'); return; }
-
-        if (!session.module || !session.date || !session.group) {
-          setStatus('Session details are missing. Close this scanner and select module, date and group again.', 'error');
-          return;
-        }
-        if (!window.opener || window.opener.closed) {
-          setStatus('The LEADERSHIP MODULE window is no longer connected. Close this scanner and reopen it from the attendance page.', 'error');
-          return;
-        }
-
-        busy = true;
-        currentScanId = studentId;
-        scanAcknowledged = false;
-        $('check').disabled = true;
-        $('restart').disabled = true;
-        $('connectionState').textContent = 'WAITING';
-        setStatus('Student ID ' + studentId + ' captured.\nComplete the attendance or registration in LEADERSHIP MODULE. The scanner is paused and will reopen after the update.', 'waiting');
-        await stopCamera();
-        document.body.classList.add('paused');
-
-        window.opener.postMessage({
-          type: 'LEADERSHIP_MODULE_QR_RESULT',
-          studentId,
-          module: session.module,
-          date: session.date,
-          group: session.group
-        }, '*');
-
-        // Apps Script HTML Service is framed. Focusing only window.opener can
-        // focus the iframe without switching away from this scanner popup.
-        // Focus the opener's top-level browser window so the student form shows.
-        try { window.opener.top.focus(); } catch (focusError) {}
-        try { window.opener.focus(); } catch (focusError) {}
-        try { window.blur(); } catch (blurError) {}
-        setTimeout(() => {
-          try { window.opener.top.focus(); } catch (focusError) {}
-        }, 120);
-
-        // Diagnose a missed hand-off instead of silently waiting forever.
-        setTimeout(() => {
-          if (busy && !scanAcknowledged && currentScanId === studentId) {
-            setStatus('ID was scanned, but LEADERSHIP MODULE has not acknowledged it. Check that the updated JavaScript.html was saved and a new Web App version was deployed.', 'error');
-          }
-        }, 2500);
-      }
-
-      window.addEventListener('message', async event => {
-        if (event.source !== window.opener) return;
-        const message = event.data;
-        if (!message || typeof message !== 'object') return;
-
-        if (message.type === 'LEADERSHIP_MODULE_QR_RECEIVED') {
-          if (String(message.studentId || '') === currentScanId) {
-            scanAcknowledged = true;
-            setStatus('Student ID ' + currentScanId + ' received by LEADERSHIP MODULE. Complete the attendance or registration in the attendance page.');
-          }
-          return;
-        }
-
-        if (message.type === 'LEADERSHIP_MODULE_QR_RESUME') {
-          document.body.classList.remove('paused');
-          try { window.focus(); } catch (focusError) {}
-          currentScanId = '';
-          scanAcknowledged = false;
-          busy = false;
-          $('check').disabled = false;
-          $('restart').disabled = false;
-          $('studentId').value = '';
-          $('connectionState').textContent = 'READY';
-          setStatus('Ready for the next student. Point the camera at the next QR code.');
-          await startCamera();
-        }
-
-        if (message.type === 'LEADERSHIP_MODULE_QR_CLOSE') {
-          await stopCamera();
-          window.close();
-        }
-      });
-
-      $('check').addEventListener('click', () => sendStudentId($('studentId').value));
-      $('studentId').addEventListener('keydown', event => {
-        if (event.key === 'Enter') sendStudentId($('studentId').value);
-      });
-      $('restart').addEventListener('click', () => {
-        if (busy) return;
-        startCamera();
-      });
-      $('back').addEventListener('click', async () => {
-        await stopCamera();
-        if (window.opener && !window.opener.closed) {
-          window.opener.postMessage({ type: 'LEADERSHIP_MODULE_QR_CLOSED' }, '*');
-        }
-        window.close();
-      });
-      window.addEventListener('pagehide', stopCamera);
-
-      if (!session.module || !session.date || !session.group) {
-        $('connectionState').textContent = 'SESSION ERROR';
-        setStatus('Missing session details. Open the scanner from LEADERSHIP MODULE after selecting module, date and a specific group.', 'error');
-      } else if (!window.opener) {
-        $('connectionState').textContent = 'NOT CONNECTED';
-        setStatus('This page was opened directly. Close it and launch Scan Student QR from LEADERSHIP MODULE.', 'error');
-      } else {
-        startCamera();
-      }
-    })();
-  </script>
+    } catch (error) {}
+  }
+  async function pauseAfterScan(studentId) {
+    busy = true;
+    $('check').disabled = true;
+    setStatus('Student ID captured. Sending to LEADERSHIP MODULE…');
+    await stopCamera();
+    if (!session.module || !session.date || !session.group || !session.token) {
+      busy = false;
+      $('check').disabled = false;
+      setStatus('Scanner session details are incomplete. Close and reopen it from LEADERSHIP MODULE.', 'error');
+      return;
+    }
+    if (!window.opener || window.opener.closed) {
+      busy = false;
+      $('check').disabled = false;
+      $('studentId').value = studentId;
+      setStatus('LEADERSHIP MODULE is not connected. Return to the attendance page and reopen the scanner.', 'error');
+      return;
+    }
+    const message = {
+      type:'LEADERSHIP_MODULE_QR_RESULT', token:session.token, studentId,
+      module:session.module, date:session.date, group:session.group
+    };
+    try {
+      window.opener.postMessage(message, '*');
+      try { window.opener.focus(); } catch (error) {}
+      setStatus('Student ID sent. Waiting for LEADERSHIP MODULE to confirm…');
+    } catch (error) {
+      busy = false;
+      $('check').disabled = false;
+      setStatus('Unable to send the Student ID to LEADERSHIP MODULE: ' + error.message, 'error');
+    }
+  }
+  async function startCamera() {
+    if (busy || starting) return;
+    starting = true;
+    await stopCamera();
+    if (typeof Html5Qrcode === 'undefined') {
+      starting = false;
+      setStatus('QR scanner library did not load. Check your internet connection or enter Student ID manually.', 'error');
+      return;
+    }
+    setStatus('Requesting camera access…');
+    try {
+      scanner = new Html5Qrcode('reader');
+      const cameras = await Html5Qrcode.getCameras();
+      if (!cameras || !cameras.length) throw new Error('No camera was detected on this device.');
+      const preferred = cameras.find(camera => /back|rear|environment|world/i.test(camera.label)) || cameras[cameras.length-1];
+      await scanner.start(preferred.id,
+        {fps:10, qrbox:{width:245,height:245}, aspectRatio:1},
+        decodedText => { if (!busy) pauseAfterScan(decodedText); },
+        () => {}
+      );
+      setStatus('Camera ready. Point it at the QR code on the student card.', 'success');
+    } catch (error) {
+      await stopCamera();
+      setStatus('Unable to start camera: ' + (error && error.message ? error.message : String(error)) + '. Check Chrome camera permission, then use manual Student ID entry.', 'error');
+    } finally {
+      starting = false;
+    }
+  }
+  async function resumeFromHost() {
+    if (!busy) return;
+    busy = false;
+    $('scannerPanel').classList.remove('hidden');
+    $('waiting').style.display = 'none';
+    $('studentId').value = '';
+    $('check').disabled = false;
+    setStatus('Restarting camera…');
+    try { window.focus(); } catch (error) {}
+    await startCamera();
+  }
+  window.addEventListener('message', event => {
+    if (!window.opener || event.source !== window.opener) return;
+    const data = event.data;
+    if (!data || data.token !== session.token) return;
+    if (data.type === 'LEADERSHIP_MODULE_QR_RECEIVED') {
+      busy = true;
+      $('scannerPanel').classList.add('hidden');
+      $('waiting').style.display = 'block';
+      setStatus('Student ID received. Scanner paused while the record is updated.', 'success');
+    } else if (data.type === 'LEADERSHIP_MODULE_QR_RESUME') {
+      $('scannerPanel').classList.remove('hidden');
+      $('waiting').style.display = 'none';
+      resumeFromHost();
+    } else if (data.type === 'LEADERSHIP_MODULE_QR_CLOSE') {
+      stopCamera().finally(() => window.close());
+    }
+  });
+  $('check').addEventListener('click', () => pauseAfterScan($('studentId').value));
+  $('studentId').addEventListener('keydown', event => {
+    if (event.key === 'Enter') pauseAfterScan($('studentId').value);
+  });
+  $('restart').addEventListener('click', () => {
+    busy = false;
+    $('scannerPanel').classList.remove('hidden');
+    $('waiting').style.display = 'none';
+    $('check').disabled = false;
+    startCamera();
+  });
+  $('back').addEventListener('click', async () => {
+    await stopCamera();
+    sendClosed();
+    window.close();
+  });
+  window.addEventListener('pagehide', () => { stopCamera(); sendClosed(); });
+  if (!session.module || !session.date || !session.group || !session.token) {
+    setStatus('Missing session details. Open the scanner from LEADERSHIP MODULE after selecting module, date and group.', 'error');
+  } else {
+    startCamera();
+  }
+})();
+</script>
 </body>
 </html>
