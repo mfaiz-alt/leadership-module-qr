@@ -43,7 +43,7 @@
     <button id="restart" class="secondary" type="button">Restart camera</button>
     <button id="back" class="secondary" type="button">Close scanner</button>
   </div>
-  <p class="note">The scanner sends the captured ID to LEADERSHIP MODULE. The camera pauses while the attendance or registration form is open and resumes after the form is completed or cancelled. <span class="pill" id="state">CONNECTING</span></p>
+  <p class="note">The scanner sends the captured ID to LEADERSHIP MODULE. The scanner closes after sending a Student ID so the form is visible. Save or cancel the form to reopen scanning. <span class="pill" id="state">CONNECTING</span></p>
 </main>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
@@ -175,8 +175,14 @@
     if (!data || typeof data !== 'object' || data.token !== session.token) return;
 
     if (data.type === 'LEADERSHIP_MODULE_QR_RECEIVED') {
-      setStatus(`LEADERSHIP MODULE received Student ID ${data.studentId || ''}. Finish the form to resume scanning.`);
-      setState('WAITING FOR FORM');
+      // The parent has received the ID. Close this popup so its attendance or
+      // registration form is no longer hidden behind the scanner window.
+      closed = true;
+      setStatus(`Student ID ${data.studentId || ''} received. Returning to LEADERSHIP MODULE…`);
+      setState('HANDED OFF');
+      stopCamera().finally(() => setTimeout(() => {
+        try { window.close(); } catch (error) {}
+      }, 100));
       return;
     }
 
